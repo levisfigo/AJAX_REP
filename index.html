@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #ddd;
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        h2 {
+            color: #fff;
+            border-bottom: 2px solid #e60000;
+            padding-bottom: 5px;
+        }
+
+        form {
+            background: #333;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 8px rgba(255, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        form input, form select, form button {
+            display: block;
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 10px;
+            font-size: 16px;
+            background: #222;
+            color: #fff;
+            border: 1px solid #660000;
+        }
+
+        table {
+            width: 100%;
+            background: #222;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.1);
+        }
+
+        table th, table td {
+            border: 1px solid #660000;
+            padding: 10px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #cc0000;
+            color: white;
+        }
+
+        button {
+            background-color: #cc0000;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #990000;
+        }
+
+        #downloadLink {
+            display: block;
+            margin-top: 15px;
+            color: #fff;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error {
+            color: red;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Student Registration</h2>
+<form id="studentForm">
+    <input type="text" placeholder="Student ID" id="student_id" required><br>
+    <input type="text" placeholder="Full Name" id="full_name" required><br>
+    <select id="department">
+        <option value="ICT">ICT</option>
+        <option value="Horticulture">Horticulture</option>
+        <option value="EEE">EEE</option>
+    </select><br>
+    <input type="number" placeholder="Level" id="level" min="1" max="5" required><br>
+    <input type="email" placeholder="Email" id="email" required><br>
+    <select id="status">
+        <option value="active">Active</option>
+        <option value="expelled">Expelled</option>
+        <option value="graduated">Graduated</option>
+    </select><br>
+    <button type="submit">Register Student</button>
+</form>
+
+<h2>Student Records</h2>
+<input type="text" id="search" placeholder="Filter by department or level">
+<table id="studentTable">
+    <thead>
+        <tr>
+            <th>ID</th><th>Name</th><th>Department</th><th>Level</th><th>Email</th><th>Status</th><th>Actions</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<br>
+<button onclick="exportToXML()">Export to XML</button>
+<a id="downloadLink" class="hidden">Download XML</a>
+
+<script>
+    let students = [];
+
+    document.getElementById('studentForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const student = {
+            student_id: studentForm.student_id.value.trim(),
+            full_name: studentForm.full_name.value.trim(),
+            department: studentForm.department.value.trim(),
+            level: parseInt(studentForm.level.value),
+            email: studentForm.email.value.trim(),
+            status: studentForm.status.value.trim()
+        };
+
+        if (!student.email.includes('@')) {
+            alert('Invalid email format!');
+            return;
+        }
+
+        students.push(student);
+        renderTable(students);
+        studentForm.reset();
+    });
+
+    function renderTable(data) {
+        const tbody = document.querySelector('#studentTable tbody');
+        tbody.innerHTML = '';
+        data.forEach((s, i) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${s.student_id}</td>
+                <td>${s.full_name}</td>
+                <td>${s.department}</td>
+                <td>${s.level}</td>
+                <td>${s.email}</td>
+                <td>${s.status}</td>
+                <td>
+                    <button onclick="promote(${i})">Promote</button>
+                    <button onclick="expel(${i})">Expel</button>
+                </td>`;
+            tbody.appendChild(row);
+        });
+    }
+
+    function promote(index) {
+        students[index].level += 1;
+        renderTable(students);
+    }
+
+    function expel(index) {
+        students[index].status = 'Expelled';
+        renderTable(students);
+    }
+
+    document.getElementById('search').addEventListener('input', function (e) {
+        const term = e.target.value.toLowerCase();
+        const filtered = students.filter(s =>
+            s.department.toLowerCase().includes(term) || s.level.toString().includes(term)
+        );
+        renderTable(filtered);
+    });
+
+    function exportToXML() {
+        let xml = '<?xml version="1.0"?>\n<students>\n';
+        students.forEach(s => {
+            xml += `  <student>\n    <id>${s.student_id}</id>\n    <name>${s.full_name}</name>\n    <department>${s.department}</department>\n    <level>${s.level}</level>\n  </student>\n`;
+        });
+        xml += '</students>';
+        const blob = new Blob([xml], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const link = document.getElementById('downloadLink');
+        link.href = url;
+        link.download = 'students.xml';
+        link.classList.remove('hidden');
+        link.textContent = 'Download XML File';
+    }
+</script>
+
+</body>
+</html>
